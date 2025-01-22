@@ -10,9 +10,11 @@ function App() {
   const apiKey = "Vef2WJyoe7RKiNKCUUwtqMcHdcMTnKVhUamNekmxkL8";
   const [search, setSearch] = useState(''); // State for the search query
   const [captions, setCaptions] = useState(''); // State for the caption
+  const [url, setURL] = useState(null); // url for selected image
   const [apiResult, setApiResult] = useState([]); // State for API results
   const [loading, setLoading] = useState(false); // State for loading
   const [error, setError] = useState(null);// State for error handling
+  let lastTextObject = null; // To keep track of the last added text object
   const canvasRef = useRef(null);
   const [canvas, setCanvas] = useState(null);
   const [showSearch, setshowSearch] = useState(true);
@@ -57,12 +59,21 @@ function App() {
       initCanvas.backgroundColor = "#fff";
       initCanvas.renderAll();
       setCanvas(initCanvas);
+      if(url){
+        addImageToCanvas(url);
+      }
 
       return () => {
         initCanvas.dispose();
       }
     }
   }, [showSearch]);
+
+  useEffect(() => {
+    if (canvasRef.current) {
+      addText();
+    }
+  }, [captions]);
 
   const addRectangle = () => {
     if (canvas) {
@@ -111,18 +122,23 @@ function App() {
       console.error("Canvas is not initialized.");
       return;
     }
+    // Remove the previously added text object, if it exists
+    if (lastTextObject) {
+      canvas.remove(lastTextObject);
+    }
     const text = new fabric.FabricText(captions || '', {
       left: 200,
       top: 200,
       fontSize: 24,
-      fill: 'black',
+      fill: 'blue',
     });
     canvas.add(text);
     canvas.renderAll();
+    lastTextObject = text;
   };
 
   const addImageToCanvas = async (imageUrl) => {
-    addText();
+    // addText();
     if (canvas) {
       fabric.FabricImage.fromURL(imageUrl, (img) => {
         img.set({
@@ -138,16 +154,14 @@ function App() {
     }
   };
 
-  const timeOutFunction = (url) => {
+  const timeOutFunction = (imagrurl) => {
+    setURL(imagrurl);
     setshowSearch(false);
-    setTimeout((url) => {
-      addImageToCanvas(url);
-    }, 5000);
+    console.log(imagrurl);
   }
 
   const download = () => {
     const imageSrc = canvas.toDataURL();
-    // some download code down here
     const a = document.createElement('a');
     a.href = imageSrc;
     a.download = 'Image.png';
@@ -201,25 +215,25 @@ function App() {
           ))}
         </div>
       </div> : (<div className='bg-slate-500 flex gap-10'> <canvas className='h-[500px] w-[500px] ml-5 py-5' id="canvas" ref={canvasRef}></canvas>
-      <div className='my-5'>
-        <div className='flex flex-row'>
-        <FaRegSquare onClick={addSquare} className='text-7xl'/>
-        <FaRegCircle onClick={addCircle} className='text-7xl'/>
-        <RiRectangleLine onClick={addRectangle} className='text-7xl' />
-        </div>
-        <input
-          type="text"
-          placeholder="Caption Text"
-          value={captions}
-          onChange={(e) => setCaptions(e.target.value)}
-          className='p-2 border-[1px] border-black	border-solid rounded-md w-full my-5'
-        />
-        <button
-        onClick={() => download()}
-        className='py-2 px-5 bg-cyan-500 text-white border-none rounded-md cursor-pointer z-50 w-full mt-5'
-      >
-        Download
-      </button></div>
+        <div className='my-5'>
+          <div className='flex flex-row'>
+            <FaRegSquare onClick={addSquare} className='text-7xl' />
+            <FaRegCircle onClick={addCircle} className='text-7xl' />
+            <RiRectangleLine onClick={addRectangle} className='text-7xl' />
+          </div>
+          <input
+            type="text"
+            placeholder="Caption Text"
+            value={captions}
+            onChange={(e) => setCaptions(e.target.value)}
+            className='p-2 border-[1px] border-black	border-solid rounded-md w-full my-5'
+          />
+          <button
+            onClick={() => download()}
+            className='py-2 px-5 bg-cyan-500 text-white border-none rounded-md cursor-pointer z-50 w-full mt-5'
+          >
+            Download
+          </button></div>
       </div>
       )}
 
